@@ -1,0 +1,12 @@
+{
+    "name": "ito/deep",
+    "authors": [
+        {
+            "name": "bassbone",
+            "email": "bassbone0o_o0@yahoo.co.jp"
+        }
+    ],
+    "require": {
+        "numphp/numphp": "*"
+    }
+}
