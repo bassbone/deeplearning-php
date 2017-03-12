@@ -13,9 +13,9 @@ $dl = new DL();
 //     [0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
 //     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
 // ));
-var_dump($dl->numerical_diff(function($x){
-    return 0.01 * $x * $x + 0.1 * $x;
-}, 10));
+var_dump($dl->numerical_gradiant(function($x){
+    return $x[0] * $x[0] + $x[1] * $x[1];
+}, [3, 4]));
 exit;
 
 class DL {
@@ -58,7 +58,7 @@ class DL {
 
     function cross_entropy_error(Array $x, Array $t) {
         $delta = 1e-7;
-        return -1 * array_sum($this->mul($t, $this->loga($this->addScalar($x, $delta))));
+        return -1 * array_sum($this->mul($t, $this->loga($this->add_scalar($x, $delta))));
     }
 
     function numerical_diff($f, $x) {
@@ -66,7 +66,25 @@ class DL {
         return ($f($x + $h) - $f($x - $h)) / (2 * $h);
     }
 
-    function addScalar(Array $x, $c) {
+    function numerical_gradiant($f, $x) {
+        $h = 1e-4;
+        $grad = [];
+        for ($i = 0; $i < count($x); $i++) {
+            $tmp_val = $x[$i];
+            
+            $x[$i] = $tmp_val + $h;
+            $fxh1 = $f($x);
+
+            $x[$i] = $tmp_val - $h;
+            $fxh2 = $f($x);
+
+            $grad[] = ($fxh1 - $fxh2) / (2 * $h);
+            $x[$i] = $tmp_val;
+        }
+        return $grad;
+    }
+
+    function add_scalar(Array $x, $c) {
         $y = [];
         foreach ($x as $tmp) {
             $y[] = $tmp + $c;
