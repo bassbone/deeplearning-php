@@ -199,7 +199,12 @@ class DL {
     }
 }
 
-class Relu {
+interface iLayer {
+    function forward($x);
+    function backward($dout);
+}
+
+class Relu implements iLayer {
 
     private $mask;
 
@@ -217,14 +222,14 @@ class Relu {
         }, $x);
     }
 
-    function backward($x) {
+    function backward($dout) {
         return array_map(function($tmp) {
             return ($tmp <= 0) ? 0 : $tmp;
-        }, $x);
+        }, $dout);
     }
 }
 
-class Sigmoid {
+class Sigmoid implements iLayer {
 
     private $out;
 
@@ -239,16 +244,16 @@ class Sigmoid {
         return $this->out;
     }
 
-    function backward($x) {
+    function backward($dout) {
         $y = [];
-        for($i = 0; $i < count($x); $i++) {
-            $y[] = $x[$i] * (1 - $this->out[$i]) * $this->out[$i];
+        for($i = 0; $i < count($dout); $i++) {
+            $y[] = $dout[$i] * (1 - $this->out[$i]) * $this->out[$i];
         }
         return $y;
     }
 }
 
-class Affine {
+class Affine implements iLayer {
 
     private $w;
     private $b;
@@ -293,7 +298,7 @@ class SoftmaxWithLoss {
         return $this->loss;
     }
 
-    function backward($dout = 1) {
+    function backward($dout) {
         $batch_size = (DL::shape($this->t))[0];
         return DL::div_scalar(DL::sub($this->y, $this->t), $batch_size);
     }
@@ -324,7 +329,13 @@ class GaussianRandom {
     }
 }
 
-class TwoLayerNet {
+interface iLayerNet {
+    function predict($x, $t);
+    function loss($x, $t);
+    function gradient($x, $t);
+}
+
+class TwoLayerNet implements iLayerNet {
 
     private $params;
     private $layers;
