@@ -7,8 +7,15 @@ $b = [[5, 6], [7, 8]];
 
 $dl = new DL();
 
-var_dump($dl->add($a, $b));
-var_dump($dl->softmax([0.3, 2.9, 4.0]));
+// var_dump($dl->sub($a, $b));
+// var_dump($dl->softmax([0.3, 2.9, 4.0]));
+// var_dump($dl->cross_entropy_error(
+//     [0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
+//     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+// ));
+var_dump($dl->numerical_diff(function($x){
+    return 0.01 * $x * $x + 0.1 * $x;
+}, 10));
 exit;
 
 class DL {
@@ -43,6 +50,44 @@ class DL {
         return $y;
     }
 
+    function mean_squared_error(Array $y, Array $t) {
+        return 0.5 * array_sum(array_map(function($tmp) {
+            return pow($tmp, 2);
+        }, $this->sub($y, $t)));
+    }
+
+    function cross_entropy_error(Array $x, Array $t) {
+        $delta = 1e-7;
+        return -1 * array_sum($this->mul($t, $this->loga($this->addScalar($x, $delta))));
+    }
+
+    function numerical_diff($f, $x) {
+        $h = 1e-4;
+        return ($f($x + $h) - $f($x - $h)) / (2 * $h);
+    }
+
+    function addScalar(Array $x, $c) {
+        $y = [];
+        foreach ($x as $tmp) {
+            $y[] = $tmp + $c;
+        }
+        return $y;
+    }
+
+    function mul(Array $x, Array $t) {
+        $y = [];
+        for ($i = 0; $i < count($x); $i++) {
+            $y[$i] = $x[$i] * $t[$i];
+        }
+        return $y;
+    }
+
+    function loga(Array $x) {
+        return array_map(function($tmp) {
+            return log($tmp);
+        }, $x);
+    }
+
     function add(Array $a, Array $b) {
         if (count($a) !== count($b)) {
             return false;
@@ -54,6 +99,22 @@ class DL {
                 $c[$i] = $this->add($a[$i], $b[$i]);
             } else {
                 $c[$i] = $a[$i] + $b[$i];
+            }
+        }
+        return $c;
+    }
+
+    function sub(Array $a, Array $b) {
+        if (count($a) !== count($b)) {
+            return false;
+        }
+        $c = [];
+        $row = count($a);
+        for ($i = 0; $i < $row; $i++) {
+            if (is_array($a[$i])) {
+                $c[$i] = $this->sub($a[$i], $b[$i]);
+            } else {
+                $c[$i] = $a[$i] - $b[$i];
             }
         }
         return $c;
